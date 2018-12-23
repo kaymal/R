@@ -1,11 +1,21 @@
 ---
 title: "R Basics: Probability"
 output: github_document
+
 ---
-# Header1
+# R Basics
 
 ```{r}
+2 * 3
+```
 
+# Probability
+
+```{r}
+choose(5, 2)
 ```
 
 
+```{r}
+choose(5, 1:5)
+```
