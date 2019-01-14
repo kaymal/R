@@ -1,3 +1,3 @@
 # R
 
-R Basics and R for Data Science
+R for Operations Research and Data Science
