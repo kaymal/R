@@ -1,3 +1,3 @@
 # R
 
-R for Operations Research and Data Science
+R for Data Science and Operations Research.
