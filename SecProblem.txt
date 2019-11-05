@@ -1,0 +1,19 @@
+function(n, nsim = 1000)
+{
+#  Input parameters:
+#  	n    = Number of candidates interviewed
+#  	nsim = Number of simulations (default is 1000)
+#
+# RAK  10-27-11
+#
+	hire.quality = numeric(nsim)
+	for(j in 1:nsim) {
+		x = sample(n, size = n)  	
+		if (x[1] == n)
+			k = n
+		else 
+			k = which(x > x[1])[1]
+		hire.quality[j] = x[k]      	
+	}
+	hire.quality                
+}
