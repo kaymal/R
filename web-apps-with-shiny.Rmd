@@ -1,0 +1,264 @@
+---
+title: "Web Applications with Shiny"
+author: "Kaymal"
+output: 
+  github_document:
+    toc: yes
+---
+## Basics
+
+_Shiny_ is an R package that makes it easy to build interactive web applications (apps) straight from R.
+
+A Shiny App, `app.R`, has three components:
+
+- a user interface object
+- a server function
+- a call to the `shinyApp` function.
+[source](https://shiny.rstudio.com/tutorial/written-tutorial/lesson1/)
+
+### Basic Shiny App
+
+```{r}
+# Load the shiny package
+library(shiny)
+```
+
+
+```{r}
+# Define UI for the application
+ui <- fluidPage()
+
+# Define the server logic
+server <- function(input, output) {}
+
+# Run the application (Combine ui and server into a shiny app)
+shinyApp(ui = ui, server = server)
+```
+
+### Adding Text
+
+```{r}
+# Create a web page with fluidPage()
+ui <- fluidPage(
+  h1("Web Applications with Shiny"),
+  "Add text",
+  strong("here")
+)
+
+# Create the server
+server <- function(input, output) {}
+
+# Combine ui and server into a shiny app
+shinyApp(ui = ui, server = server)
+```
+
+### Adding Input
+
+```{r}
+# Define UI for the application
+ui <- fluidPage(
+  # Create a numeric input with ID "year" and label of
+  # "Year?"
+  numericInput("year", "Year?", value = 2019),
+  
+  # Create a text input with ID "month" and label of 
+  # "Month?"
+  textInput("month", "Month?", value = "January")
+)
+
+# Define the server logic
+server <- function(input, output) {}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
+### Adding Output
+
+```{r}
+# Define UI for the application
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      textInput("name", "What is your name?", "xyz"),
+      numericInput("num", "Number of flowers to show data for",
+                   10, 1, nrow(iris))
+    ),
+    mainPanel(
+      textOutput("greeting"),
+      plotOutput("cars_plot"),
+      tableOutput("iris_table")
+    )
+  )
+)
+
+# Define the server logic
+server <- function(input, output) {
+  # Create a plot of the "cars" dataset 
+  output$cars_plot <- renderPlot({
+    plot(cars)
+  })
+  
+  # Render a text greeting as "Hello <name>"
+  output$greeting <- renderText({
+    paste("Hello", input$name)
+  })
+  
+  # Show a table of the first n rows of the "iris" data
+  output$iris_table <- renderTable({
+    data <- iris[1:input$num, ]
+    data
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
+
+### Adding Structure/Layout
+
+```{r}
+# Define UI
+ui <- fluidPage(
+  # Add a sidebar layout to the application
+  sidebarLayout(
+    # Add a sidebar panel around the text and inputs
+    sidebarPanel(
+      h4("Plot parameters"),
+      textInput("title", "Plot title", "Car speed vs distance to stop"),
+      # textInput(inputId, label, value = "", width = NULL, placeholder = NULL)
+      numericInput("num", "Number of cars to show", 30, 1, nrow(cars)),
+      # numericInput(inputId, label, value, min = NA, max = NA, step = NA, width = NULL)
+      sliderInput("size", "Point size", 1, 5, 2, 0.5)
+      # sliderInput(inputId, label, min, max, value, step = NULL ...)
+    ),
+    # Add a main panel around the plot and table
+    mainPanel(
+      plotOutput("plot"),
+      tableOutput("table")
+    )
+  )
+)
+
+# Server logic
+server <- function(input, output) {
+  output$plot <- renderPlot({    # Build the object and save the result into output
+    plot(cars[1:input$num, ], main = input$title, cex = input$size)
+  })
+  output$table <- renderTable({
+    cars[1:input$num, ]
+  })
+}
+
+# Complete app with UI and server components
+shinyApp(ui = ui, server = server)
+```
+
+### Reactive Context
+
+```{r}
+ui <- fluidPage(
+  numericInput("num1", "Number 1", 5),
+  numericInput("num2", "Number 2", 10),
+  textOutput("result")
+)
+
+server <- function(input, output) {
+  # Calculate the sum of the inputs
+  my_sum <- reactive({
+    input$num1 + input$num2
+  })
+
+  # Calculate the average of the inputs
+  my_average <- reactive({
+    my_sum() / 2
+  })
+  
+  output$result <- renderText({
+    paste(
+      # Print the calculated sum
+      "The sum is", my_sum(),
+      # Print the calculated average
+      "and the average is", my_average()
+    )
+  })
+}
+
+shinyApp(ui, server)
+```
+
+## Plots with Shiny
+
+```{r}
+library(gapminder)
+
+gapminder[sample(nrow(gapminder), size = 5), ]
+# sample_n(gapminder, 10) # >>> dplyr
+```
+
+```{r}
+subset(gapminder, country == "Turkey" & year > 1980)
+```
+
+```{r}
+# Define UI for the application
+ui <- fluidPage(
+  "The population of Turkey in 2007 was",
+  textOutput("answer")
+)
+
+# Define the server function
+server <- function(input, output) {
+  output$answer <- renderText({
+    # Determine the population of Turkey in year 2007
+    subset(gapminder, country == "Turkey" & year == 2007)$pop
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
+### Modifying Plots
+
+```{r}
+# Load the ggplot2 package for plotting
+library(ggplot2)
+
+# Define UI for the application
+ui <- fluidPage(
+  sidebarLayout(
+    sidebarPanel(
+      textInput("title", "Title", "GDP vs life exp"),
+      numericInput("size", "Point size", 1, 1),
+      # Add a checkbox for line of best fit
+      checkboxInput("fit", "Add line of best fit", FALSE)
+    ),
+    mainPanel(
+      plotOutput("plot")
+    )
+  )
+)
+
+# Define the server logic
+server <- function(input, output) {
+  output$plot <- renderPlot({
+    p <- ggplot(gapminder, aes(gdpPercap, lifeExp)) +
+      geom_point(size = input$size) +
+      scale_x_log10() +
+      ggtitle(input$title)
+    
+    # When the "fit" checkbox is checked, add a line
+    # of best fit
+    if (input$fit) {
+      p <- p + geom_smooth(method = "lm")
+    }
+    p
+  })
+}
+
+# Run the application
+shinyApp(ui = ui, server = server)
+```
+
